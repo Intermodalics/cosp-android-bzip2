@@ -15,41 +15,60 @@
 SHELL=/bin/sh
 
 # To assist in cross-compiling
-CC=gcc
-AR=ar
-RANLIB=ranlib
+ifeq ($(CC),)
+	CC=gcc
+endif
+
+ifeq ($(AR),)
+	AR=ar
+endif
+
+ifeq ($(RANLIB),)
+	RANLIB=ranlib
+endif
+
+ifeq ($(ABI),)
+	ABI=armeabi
+endif
+
+OUTDIR=out-$(ABI)
+
 LDFLAGS=
 
 BIGFILES=-D_FILE_OFFSET_BITS=64
 CFLAGS=-Wall -Winline -O2 -g $(BIGFILES)
 
 # Where you want it installed when you do 'make install'
-PREFIX=/usr/local
+ifeq ($(PREFIX),)
+	PREFIX=/usr/local
+endif
 
 
-OBJS= blocksort.o  \
-      huffman.o    \
-      crctable.o   \
-      randtable.o  \
-      compress.o   \
-      decompress.o \
-      bzlib.o
+OBJS= $(OUTDIR)/blocksort.o  \
+      $(OUTDIR)/huffman.o    \
+      $(OUTDIR)/crctable.o   \
+      $(OUTDIR)/randtable.o  \
+      $(OUTDIR)/compress.o   \
+      $(OUTDIR)/decompress.o \
+      $(OUTDIR)/bzlib.o
 
-all: libbz2.a bzip2 bzip2recover test
+all: libbz2 bzip2 bzip2recover test
 
-bzip2: libbz2.a bzip2.o
+bzip2: libbz2 bzip2.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2 bzip2.o -L. -lbz2
 
 bzip2recover: bzip2recover.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2recover bzip2recover.o
 
-libbz2.a: $(OBJS)
-	rm -f libbz2.a
-	$(AR) cq libbz2.a $(OBJS)
+libbz2: $(OUTDIR)/libbz2.a
+
+$(OUTDIR)/libbz2.a: $(OBJS)
+	rm -f $(OUTDIR)/libbz2.a
+	$(AR) cq $(OUTDIR)/libbz2.a $(OBJS)
 	@if ( test -f $(RANLIB) -o -f /usr/bin/ranlib -o \
 		-f /bin/ranlib -o -f /usr/ccs/bin/ranlib ) ; then \
-		echo $(RANLIB) libbz2.a ; \
-		$(RANLIB) libbz2.a ; \
+		echo $(RANLIB) $(OUTDIR)/libbz2.a ; \
+		$(RANLIB) $(OUTDIR)/libbz2.a ; \
 	fi
 
 check: test
@@ -69,7 +88,7 @@ test: bzip2
 	cmp sample3.tst sample3.ref
 	@cat words3
 
-install: bzip2 bzip2recover
+install: install-libbz2 bzip2 bzip2recover
 	if ( test ! -d $(PREFIX)/bin ) ; then mkdir -p $(PREFIX)/bin ; fi
 	if ( test ! -d $(PREFIX)/lib ) ; then mkdir -p $(PREFIX)/lib ; fi
 	if ( test ! -d $(PREFIX)/man ) ; then mkdir -p $(PREFIX)/man ; fi
@@ -85,10 +104,6 @@ install: bzip2 bzip2recover
 	chmod a+x $(PREFIX)/bin/bzip2recover
 	cp -f bzip2.1 $(PREFIX)/man/man1
 	chmod a+r $(PREFIX)/man/man1/bzip2.1
-	cp -f bzlib.h $(PREFIX)/include
-	chmod a+r $(PREFIX)/include/bzlib.h
-	cp -f libbz2.a $(PREFIX)/lib
-	chmod a+r $(PREFIX)/lib/libbz2.a
 	cp -f bzgrep $(PREFIX)/bin/bzgrep
 	ln -s -f $(PREFIX)/bin/bzgrep $(PREFIX)/bin/bzegrep
 	ln -s -f $(PREFIX)/bin/bzgrep $(PREFIX)/bin/bzfgrep
@@ -108,30 +123,41 @@ install: bzip2 bzip2recover
 	echo ".so man1/bzmore.1" > $(PREFIX)/man/man1/bzless.1
 	echo ".so man1/bzdiff.1" > $(PREFIX)/man/man1/bzcmp.1
 
+install-libbz2: libbz2
+	if ( test ! -d $(PREFIX)/lib/$(ABI) ) ; then mkdir -p $(PREFIX)/lib/$(ABI) ; fi
+	if ( test ! -d $(PREFIX)/include ) ; then mkdir -p $(PREFIX)/include ; fi
+	cp -f $(OUTDIR)/libbz2.a $(PREFIX)/lib/$(ABI)
+	chmod a+r $(PREFIX)/lib/$(ABI)/libbz2.a
+	cp -f bzlib.h $(PREFIX)/include
+	chmod a+r $(PREFIX)/include/bzlib.h
+
 clean: 
-	rm -f *.o libbz2.a bzip2 bzip2recover \
+	rm -Rf out-* \
 	sample1.rb2 sample2.rb2 sample3.rb2 \
 	sample1.tst sample2.tst sample3.tst
 
-blocksort.o: blocksort.c
+$(OUTDIR):
+	mkdir -p $(OUTDIR)
+
+$(OUTDIR)/blocksort.o: $(OUTDIR) blocksort.c
 	@cat words0
-	$(CC) $(CFLAGS) -c blocksort.c
-huffman.o: huffman.c
-	$(CC) $(CFLAGS) -c huffman.c
-crctable.o: crctable.c
-	$(CC) $(CFLAGS) -c crctable.c
-randtable.o: randtable.c
-	$(CC) $(CFLAGS) -c randtable.c
-compress.o: compress.c
-	$(CC) $(CFLAGS) -c compress.c
-decompress.o: decompress.c
-	$(CC) $(CFLAGS) -c decompress.c
-bzlib.o: bzlib.c
-	$(CC) $(CFLAGS) -c bzlib.c
-bzip2.o: bzip2.c
-	$(CC) $(CFLAGS) -c bzip2.c
-bzip2recover.o: bzip2recover.c
-	$(CC) $(CFLAGS) -c bzip2recover.c
+	$(CC) $(CFLAGS) -c blocksort.c -o $(OUTDIR)/blocksort.o
+$(OUTDIR)/huffman.o: $(OUTDIR) huffman.c
+	$(CC) $(CFLAGS) -c huffman.c -o $(OUTDIR)/huffman.o
+$(OUTDIR)/crctable.o: $(OUTDIR) crctable.c
+	$(CC) $(CFLAGS) -c crctable.c -o $(OUTDIR)/crctable.o
+$(OUTDIR)/randtable.o: $(OUTDIR) randtable.c
+	$(CC) $(CFLAGS) -c randtable.c -o $(OUTDIR)/randtable.o
+$(OUTDIR)/compress.o: $(OUTDIR) compress.c
+	$(CC) $(CFLAGS) -c compress.c -o $(OUTDIR)/compress.o
+$(OUTDIR)/decompress.o: $(OUTDIR) decompress.c
+	$(CC) $(CFLAGS) -c decompress.c -o $(OUTDIR)/decompress.o
+$(OUTDIR)/bzlib.o: $(OUTDIR) bzlib.c
+	$(CC) $(CFLAGS) -c bzlib.c -o $(OUTDIR)/bzlib.o
+$(OUTDIR)/bzip2.o: $(OUTDIR) bzip2.c
+	$(CC) $(CFLAGS) -c bzip2.c -o $(OUTDIR)/bzip2.o
+$(OUTDIR)/bzip2recover.o: $(OUTDIR) bzip2recover.c
+	$(CC) $(CFLAGS) -c bzip2recover.c -o $(OUTDIR)/bzip2recover.o
 
 
 distclean: clean
