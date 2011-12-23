@@ -16,3 +16,8 @@ export OUTDIR
 
 make -j$BUILD_NUM_JOBS libbz2 install-libbz2 || exit 1
 
+if [ "x$CUSTOM_OUTDIR" = "xno" ]; then
+  rm -Rf $OUTDIR
+fi
+
+exit 0
