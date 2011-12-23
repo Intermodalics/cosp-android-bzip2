@@ -31,7 +31,9 @@ ifeq ($(ABI),)
 	ABI=armeabi
 endif
 
-OUTDIR=out-$(ABI)
+ifeq ($(OUTDIR),)
+	OUTDIR=out-$(ABI)
+endif
 
 LDFLAGS=
 
@@ -63,7 +65,6 @@ bzip2recover: bzip2recover.o
 libbz2: $(OUTDIR)/libbz2.a
 
 $(OUTDIR)/libbz2.a: $(OBJS)
-	rm -f $(OUTDIR)/libbz2.a
 	$(AR) cq $(OUTDIR)/libbz2.a $(OBJS)
 	@if ( test -f $(RANLIB) -o -f /usr/bin/ranlib -o \
 		-f /bin/ranlib -o -f /usr/ccs/bin/ranlib ) ; then \
@@ -136,27 +137,33 @@ clean:
 	sample1.rb2 sample2.rb2 sample3.rb2 \
 	sample1.tst sample2.tst sample3.tst
 
-$(OUTDIR):
-	mkdir -p $(OUTDIR)
-
-$(OUTDIR)/blocksort.o: $(OUTDIR) blocksort.c
+$(OUTDIR)/blocksort.o: blocksort.c
 	@cat words0
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c blocksort.c -o $(OUTDIR)/blocksort.o
-$(OUTDIR)/huffman.o: $(OUTDIR) huffman.c
+$(OUTDIR)/huffman.o: huffman.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c huffman.c -o $(OUTDIR)/huffman.o
-$(OUTDIR)/crctable.o: $(OUTDIR) crctable.c
+$(OUTDIR)/crctable.o: crctable.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c crctable.c -o $(OUTDIR)/crctable.o
-$(OUTDIR)/randtable.o: $(OUTDIR) randtable.c
+$(OUTDIR)/randtable.o: randtable.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c randtable.c -o $(OUTDIR)/randtable.o
-$(OUTDIR)/compress.o: $(OUTDIR) compress.c
+$(OUTDIR)/compress.o: compress.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c compress.c -o $(OUTDIR)/compress.o
-$(OUTDIR)/decompress.o: $(OUTDIR) decompress.c
+$(OUTDIR)/decompress.o: decompress.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c decompress.c -o $(OUTDIR)/decompress.o
-$(OUTDIR)/bzlib.o: $(OUTDIR) bzlib.c
+$(OUTDIR)/bzlib.o: bzlib.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c bzlib.c -o $(OUTDIR)/bzlib.o
-$(OUTDIR)/bzip2.o: $(OUTDIR) bzip2.c
+$(OUTDIR)/bzip2.o: bzip2.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c bzip2.c -o $(OUTDIR)/bzip2.o
-$(OUTDIR)/bzip2recover.o: $(OUTDIR) bzip2recover.c
+$(OUTDIR)/bzip2recover.o: bzip2recover.c
+	@if [ ! -d $(OUTDIR) ]; then mkdir -p $(OUTDIR); fi
 	$(CC) $(CFLAGS) -c bzip2recover.c -o $(OUTDIR)/bzip2recover.o
 
 
