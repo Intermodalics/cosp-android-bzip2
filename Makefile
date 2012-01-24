@@ -62,7 +62,7 @@ bzip2: libbz2 bzip2.o
 bzip2recover: bzip2recover.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o bzip2recover bzip2recover.o
 
-libbz2: $(OUTDIR)/libbz2.a
+libbz2: $(OUTDIR)/libbz2.a $(OUTDIR)/libbz2.so
 
 $(OUTDIR)/libbz2.a: $(OBJS)
 	$(AR) cq $(OUTDIR)/libbz2.a $(OBJS)
@@ -71,6 +71,9 @@ $(OUTDIR)/libbz2.a: $(OBJS)
 		echo $(RANLIB) $(OUTDIR)/libbz2.a ; \
 		$(RANLIB) $(OUTDIR)/libbz2.a ; \
 	fi
+
+$(OUTDIR)/libbz2.so: $(OBJS)
+	$(CC) -shared -o $(OUTDIR)/libbz2.so $(OBJS)
 
 check: test
 test: bzip2
@@ -129,6 +132,8 @@ install-libbz2: libbz2
 	if ( test ! -d $(PREFIX)/include ) ; then mkdir -p $(PREFIX)/include ; fi
 	cp -f $(OUTDIR)/libbz2.a $(PREFIX)/lib/$(ABI)
 	chmod a+r $(PREFIX)/lib/$(ABI)/libbz2.a
+	cp -f $(OUTDIR)/libbz2.so $(PREFIX)/lib/$(ABI)
+	chmod a+r $(PREFIX)/lib/$(ABI)/libbz2.so
 	cp -f bzlib.h $(PREFIX)/include
 	chmod a+r $(PREFIX)/include/bzlib.h
 
